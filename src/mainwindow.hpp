@@ -24,6 +24,7 @@
 #include <vector>
 #include <wx/sizer.h>
 #include <wx/checklst.h>
+#include <wx/menu.h>
 
 class instruction_set_t;
 class raw_program_t;
@@ -46,6 +47,7 @@ protected:
 	void OnExport();
 	void OnImport();
 	void OnDelete();
+	void OnSelectAll(bool);
 private:
 	std::filesystem::path iset_path,opened_file;
 	std::unique_ptr<instruction_set_t> p_iset;
@@ -65,7 +67,11 @@ private:
 	wxPoint default_position;//默认的窗口位置
 	wxSize default_size;//默认的窗口大小
 	bool default_maxwindow;//启动程序时是否全屏
+	wxMenu *menuEdit;//菜单栏上的“编辑”
 	
 	void load_appdata();
 	void save_appdata();
+
+	void show_edit_place();
+	void hide_edit_place();
 };

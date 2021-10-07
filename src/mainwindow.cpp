@@ -70,6 +70,9 @@ const int ID_BUT_CLEAR_ALL=3;
 const int ID_BUT_IMPORT=4;
 const int ID_BUT_EXPORT=5;
 const int ID_BUT_DELET=6;
+const int ID_CLEAR_ALL=7;
+const int ID_IMPORT=8;
+const int ID_EXPORT=9;
 
 void MainWindow::load_instruction_set()
 {
@@ -168,6 +171,19 @@ MainWindow::MainWindow():
 	menuFile->Append(wxID_SAVEAS,U8S("另存为..."));
 	menuFile->AppendSeparator();
 	menuFile->Append(wxID_CLOSE,U8S("关闭(&W)...\tCtrl+W"));
+	menuEdit=new wxMenu;
+	menuEdit->Append(wxID_SELECTALL,U8S("全选(&A)\tCtrl+A"));
+	menuEdit->Append(ID_CLEAR_ALL,U8S("清除选择\tCtrl+Shift+A"));
+	menuEdit->AppendSeparator();
+	menuEdit->Append(wxID_DELETE,U8S("删除(&D)\tDelete"));
+	menuEdit->AppendSeparator();
+	menuEdit->Append(ID_IMPORT,U8S("导入...\tCtrl+Alt+I"));
+	menuEdit->Append(ID_EXPORT,U8S("导出...\tCtrl+Alt+E"));
+	menuEdit->Enable(wxID_SELECTALL,false);
+	menuEdit->Enable(ID_CLEAR_ALL,false);
+	menuEdit->Enable(wxID_DELETE,false);
+	menuEdit->Enable(ID_EXPORT,false);
+	menuEdit->Enable(ID_IMPORT,false);
 	auto *menuOption=new wxMenu;
 	menuOption->Append(ID_INSTRUCTION_SET,U8S("选择指令集(&I)...\tCtrl+Shift+I"));
 	auto *menuHelp=new wxMenu;
@@ -176,6 +192,7 @@ MainWindow::MainWindow():
 	
 	auto *menuBar=new wxMenuBar;
 	menuBar->Append(menuFile,U8S("文件(&F)"));
+	menuBar->Append(menuEdit,U8S("编辑(&E)"));
 	menuBar->Append(menuOption,U8S("选项(&O)"));
 	menuBar->Append(menuHelp,U8S("帮助(&H)"));
 	
@@ -211,18 +228,13 @@ MainWindow::MainWindow():
 	Bind(wxEVT_MENU,[this](wxCommandEvent&){OnInstructionSet();},ID_INSTRUCTION_SET);
 	Bind(wxEVT_MENU,[this](wxCommandEvent&){OnHelp();},wxID_HELP);
 	Bind(wxEVT_MENU,[this](wxCommandEvent&){OnAbout();},wxID_ABOUT);
-	Bind(wxEVT_BUTTON,[this](wxCommandEvent&)
-	{
-		auto n=program_list.size();
-		for(unsigned i=0;i<n;++i)
-			programViewer->Check(i);
-	},ID_BUT_SELECT_ALL);
-	Bind(wxEVT_BUTTON,[this](wxCommandEvent&)
-	{
-		auto n=program_list.size();
-		for(unsigned i=0;i<n;++i)
-			programViewer->Check(i,false);
-	},ID_BUT_CLEAR_ALL);
+	Bind(wxEVT_MENU,[this](wxCommandEvent&){OnSelectAll(true);},wxID_SELECTALL);
+	Bind(wxEVT_MENU,[this](wxCommandEvent&){OnSelectAll(false);},ID_CLEAR_ALL);
+	Bind(wxEVT_MENU,[this](wxCommandEvent&){OnDelete();},wxID_DELETE);
+	Bind(wxEVT_MENU,[this](wxCommandEvent&){OnExport();},ID_EXPORT);
+	Bind(wxEVT_MENU,[this](wxCommandEvent&){OnImport();},ID_IMPORT);
+	Bind(wxEVT_BUTTON,[this](wxCommandEvent&){OnSelectAll(true);},ID_BUT_SELECT_ALL);
+	Bind(wxEVT_BUTTON,[this](wxCommandEvent&){OnSelectAll(false);},ID_BUT_CLEAR_ALL);
 	Bind(wxEVT_CLOSE_WINDOW,&MainWindow::OnCloseWindow,this);
 	Bind(wxEVT_BUTTON,[this](wxCommandEvent&){OnExport();},ID_BUT_EXPORT);
 	Bind(wxEVT_BUTTON,[this](wxCommandEvent&){OnImport();},ID_BUT_IMPORT);
@@ -236,6 +248,25 @@ MainWindow::MainWindow():
 	SetSize(default_size);
 	SetPosition(default_position);
 	Maximize(default_maxwindow);
+}
+
+void MainWindow::show_edit_place()
+{
+	editPlace->ShowItems(true);
+	menuEdit->Enable(wxID_SELECTALL,true);
+	menuEdit->Enable(ID_CLEAR_ALL,true);
+	menuEdit->Enable(wxID_DELETE,true);
+	menuEdit->Enable(ID_EXPORT,true);
+	menuEdit->Enable(ID_IMPORT,true);
+}
+void MainWindow::hide_edit_place()
+{
+	editPlace->ShowItems(false);
+	menuEdit->Enable(wxID_SELECTALL,false);
+	menuEdit->Enable(ID_CLEAR_ALL,false);
+	menuEdit->Enable(wxID_DELETE,false);
+	menuEdit->Enable(ID_EXPORT,false);
+	menuEdit->Enable(ID_IMPORT,false);
 }
 
 bool MainWindow::OnNew()
@@ -264,7 +295,7 @@ bool MainWindow::OnNew()
 	SetTitle(wxString::Format(U8S("%s-*"),program_title));
 	programViewer->Clear();
 	program_list.clear();
-	editPlace->ShowItems(true);
+	show_edit_place();
 	return true;
 }
 
@@ -307,7 +338,7 @@ bool MainWindow::OnOpen()
 			programViewer->Append(wxString::Format(U8S("程序 #%03u"),(unsigned)it->first));
 			program_list.push_back(it->first);
 		}
-		editPlace->ShowItems(true);
+		show_edit_place();
 			//io::cout<<it->first<<"\n";
 		return true;
 		
@@ -394,7 +425,7 @@ bool MainWindow::OnCloseFile(bool confirm)
 	SetTitle(program_title);
 	programViewer->Clear();
 	program_list.clear();
-	editPlace->ShowItems(false);
+	hide_edit_place();
 	return true;
 }
 
@@ -647,4 +678,22 @@ void MainWindow::OnDelete()
 		raw_program_unsave=true;
 		SetTitle(wxString::Format(U8S("%s-*%s"),program_title,U8S(opened_file.u8string().c_str())));
 	}
+}
+
+// void MainWindow::OnKeyPress(wxKeyEvent &event)
+// {
+// 	std::cout<<"111"<<std::endl;
+// 	switch(event.GetKeyCode())
+// 	{
+// 	case WXK_CONTROL|'A':OnSelectAll();break;
+// 	default:
+// 		std::cout<<event.GetKeyCode()<<std::endl;
+// 	}
+// }
+
+void MainWindow::OnSelectAll(bool check)
+{
+	auto n=program_list.size();
+	for(unsigned i=0;i<n;++i)
+		programViewer->Check(i,check);
 }
