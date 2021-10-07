@@ -68,3 +68,6 @@ cmake --build . --config=Release
    - 由于`Linux`下不存在此问题，本版本只发布`Windows`可执行文件。
 2. 在之后的更新中，如果`data`或`external`目录未改动，则只在一个次要版本的首个版本的源代码中打包`data`或`external`目录。
 
+### v0.2.1.0 (20211007)
+
+1. 为编辑区的按钮添加快捷键。

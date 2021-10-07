@@ -6,7 +6,7 @@
 # notice and this notice are preserved.  This file is offered as-is,
 # without any warranty.
 cmake_minimum_required(VERSION 3.4)
-project(ycpies VERSION 0.2.0.1)#Yaskawa Controller Program Import and Export System
+project(ycpies VERSION 0.2.1.0)#Yaskawa Controller Program Import and Export System
 set(CMAKE_CXX_STANDARD 17)
 
 option(DISPLAY_WIDTH_WX "使用wxWidgets获得字符串的渲染宽度." ON)
